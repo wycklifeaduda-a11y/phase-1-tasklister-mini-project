@@ -50,8 +50,32 @@ describe('Handling form submission', () => {
   it('should add an event to the form and add input to webpage', () => {
     // Simulate user input
     formInput.value = 'Wash the dishes'
-    const event = new dom.window.Event('submit')
+    const event = new dom.window.Event('submit', { cancelable: true })
     form.dispatchEvent(event)
+    expect(event.defaultPrevented).to.equal(true)
     expect(taskList.textContent).to.include('Wash the dishes')
+  })
+
+  it('should ignore blank tasks and trim task descriptions', () => {
+    formInput.value = '   '
+    form.dispatchEvent(new dom.window.Event('submit', { cancelable: true }))
+    expect(taskList.children).to.have.length(1)
+
+    formInput.value = '  Take out the trash  '
+    form.dispatchEvent(new dom.window.Event('submit', { cancelable: true }))
+    expect(taskList.lastElementChild.querySelector('.task-description').textContent)
+      .to.equal('Take out the trash')
+    expect(formInput.value).to.equal('')
+  })
+
+  it('should let users complete and delete tasks', () => {
+    const task = taskList.lastElementChild
+    const completeButton = task.querySelector('.complete-task')
+    completeButton.click()
+    expect(task.classList.contains('completed')).to.equal(true)
+    expect(completeButton.getAttribute('aria-pressed')).to.equal('true')
+
+    task.querySelector('.delete-task').click()
+    expect(taskList.contains(task)).to.equal(false)
   })
 })
